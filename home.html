@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inventory Tracker Dashboard</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+
+    body {
+      background: linear-gradient(to bottom right, #03045e, #023e8a);
+      background-attachment: fixed;
+      color: #fff;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('bubbles.png') repeat;
+      opacity: 0.1;
+      z-index: -1;
+      animation: float 60s linear infinite;
+    }
+
+    @keyframes float {
+      0% { background-position: 0 0; }
+      100% { background-position: 1000px 1000px; }
+    }
+
+    main {
+      flex: 1;
+    }
+
+    h1 {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .glassy-box {
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 10px;
+      padding: 20px;
+      margin: 30px auto;
+      width: 95%;
+      color: #000;
+    }
+
+    header, footer {
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background-color: #fff;
+      color: #000;
+    }
+
+    th, td {
+      padding: 12px;
+      border: 1px solid #dee2e6;
+      text-align: center;
+    }
+
+    th {
+      background-color: #343a40;
+      color: white;
+    }
+
+    .status-sufficient { color: green; font-weight: bold; }
+    .status-low { color: orange; font-weight: bold; }
+    .status-out { color: red; font-weight: bold; }
+
+    .search {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    .search input {
+      padding: 8px;
+      width: 300px;
+      font-size: 16px;
+    }
+
+    .add-btn, .remove-btn {
+      padding: 6px 12px;
+      margin: 2px;
+      font-weight: bold;
+      border: 1px solid #a259ff;
+      background: #fff;
+      color: #a259ff;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .add-btn:hover, .remove-btn:hover {
+      background: #a259ff;
+      color: #fff;
+    }
+
+    .notification {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      padding: 10px 15px;
+      border-radius: 5px;
+      color: white;
+      font-weight: bold;
+      z-index: 1000;
+      animation: fade 0.3s ease-in-out;
+    }
+
+    .notification.success { background: #28a745; }
+    .notification.warning { background: #ffc107; color: #000; }
+    .notification.error { background: #dc3545; }
+
+    @keyframes fade {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .logout-btn {
+      display: block;
+      margin: 30px auto;
+      padding: 8px 16px;
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    form#addForm {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    form#addForm input {
+      margin: 5px;
+      padding: 8px;
+    }
+
+    form#addForm button {
+      margin-left: 10px;
+      padding: 8px 14px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+    }
+
+    table tr:hover { background-color: #f1f1f1; }
+    button:hover { transform: scale(1.05); transition: 0.2s; }
+
+    footer {
+      text-align: center;
+      padding: 15px 10px;
+      color: #fff;
+      margin-top: auto;
+    }
+.actions {
+  display: flex;
+  justify-content: space-between;  /* Distribute left and right */
+  align-items: center;
+  gap: 5px;
+}
+
+/* Style the delete button like a logout icon */
+.delete-btn {
+  background-color: red;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  border-radius: 50%;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  margin-left: auto;  /* Push it to the right inside flex */
+}
+
+.delete-btn:hover {
+  background-color: darkred;
+}
+
+
+
+
+
+  </style>
+</head>
+<body>
+ <header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom">
+  <div class="col-md-3 mb-2 mb-md-0 ps-3">
+    <a href="/" class="d-inline-flex align-items-center link-body-emphasis text-decoration-none">
+      <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" fill="currentColor" class="bi bi-house-check text-white" viewBox="0 0 16 16">
+  <path d="M7.293 1.5a1 1 0 0 1 1.414 0L11 3.793V2.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v3.293l2.354 2.353a.5.5 0 0 1-.708.708L8 2.207l-5 5V13.5a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 2 13.5V8.207l-.646.647a.5.5 0 1 1-.708-.708z"/>
+  <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m1.679-4.493-1.335 2.226a.75.75 0 0 1-1.174.144l-.774-.773a.5.5 0 0 1 .708-.707l.547.547 1.17-1.951a.5.5 0 1 1 .858.514"/>
+</svg>
+
+      <span class="ms-2 fw-bold text-white">Inventory Tracker</span>
+
+    </a>
+  </div>
+
+  <ul class="nav col-12 col-md-auto mb-2 justify-content-center mb-md-0">
+    <li><a href="#" class="nav-link px-2 link-secondary">Home</a></li>
+    <li><a href="logs.html" class="nav-link px-2">Log</a></li>
+
+    <li><a href="#" class="nav-link px-2">Pricing</a></li>
+    <li><a href="#" class="nav-link px-2">FAQs</a></li>
+    <li><a href="#" class="nav-link px-2">About</a></li>
+  </ul>
+
+  <div class="col-md-3 text-end pe-3">
+    <button onclick="logout()" class="btn btn-danger">Logout</button>
+  </div>
+</header>
+
+
+
+
+
+  <main>
+    <div class="glassy-box">
+      <h1>Inventory Tracker Dashboard</h1>
+      <h3 style="text-align: center;">Add New Product</h3>
+      <form id="addForm">
+        <input type="text" id="pname" placeholder="Product Name" required />
+        <input type="text" id="pid" placeholder="Product ID" required />
+        <input type="number" id="pstock" placeholder="Stock" required />
+        <input type="number" id="preorder" placeholder="Reorder Level" required />
+        <button type="submit">Add Product</button>
+      </form>
+
+      <div class="search">
+        <input type="text" placeholder="Search by product name or ID..." />
+      </div>
+
+    <table id="productTable">
+  <thead>
+    <tr>
+      <th>Product Name</th>
+      <th>Product ID</th>
+      <th>In Stock</th>
+      <th>Reorder Level</th>
+      <th>Status</th>
+      <th>Last Updated</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody id="productTableBody">
+    <!-- Dynamic rows will be inserted here by JavaScript -->
+  </tbody>
+</table>
+
+    </div>
+  </main>
+
+  <footer>
+    <p>© 2025 Inventory System</p>
+  </footer>
+
+  <script src="sample.js"></script>
+  <script>
+    document.getElementById('pid').addEventListener('input', function () {
+      this.value = this.value.toUpperCase();
+    });
+  </script>
+  <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+ import {
+  getFirestore,
+  collection,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
+  serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyD1xGn7oEn-E-mitA-nX6KSu3xKD_ZfkvY",
+    authDomain: "inventory-tracker-f2581.firebaseapp.com",
+    projectId: "inventory-tracker-f2581",
+    storageBucket: "inventory-tracker-f2581.appspot.com",
+    messagingSenderId: "1076860596942",
+    appId: "1:1076860596942:web:e53b86f1f938f3fd219e07"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+const auth = getAuth(app);
+let currentUser = null;
+
+auth.onAuthStateChanged((user) => {
+  if (user) {
+    currentUser = user;
+  }
+});
+
+async function logActivity(user, action, details) {
+  try {
+    await addDoc(collection(db, "activity_logs"), {
+      user: user || "Anonymous",
+      action: action,
+      details: details,
+      timestamp: serverTimestamp()
+    });
+    console.log("Activity logged:", action);
+  } catch (error) {
+    console.error("Error logging activity:", error);
+  }
+}
+
+  document.getElementById("addForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const id = document.getElementById("pid").value;
+    const name = document.getElementById("pname").value;
+    const stock = parseInt(document.getElementById("pstock").value);
+    const reorder = parseInt(document.getElementById("preorder").value);
+
+    try {
+      await addDoc(collection(db, "inventory"), {
+        id,
+        name,
+        stock,
+        reorder,
+        updated: serverTimestamp()
+      });
+logActivity(currentUser?.email || "Unknown", "Add Product", `Added ${stock} units of "${name}" (ID: ${id})`);
+
+      alert("Product added successfully!");
+      
+      document.getElementById("addForm").reset();
+      loadInventory(); // Refresh table
+    } catch (error) {
+      console.error("Error adding document: ", error);
+    }
+  });
+
+  function getStatus(stock, reorder) {
+    if (stock === 0) return '<span class="status-out">Out of Stock</span>';
+    if (stock <= reorder) return '<span class="status-low">Low Stock</span>';
+    return '<span class="status-sufficient">Sufficient</span>';
+  }
+
+  function formatDate(timestamp) {
+    if (!timestamp) return 'N/A';
+    const date = timestamp.toDate();
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' +
+           date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  }
+
+async function loadInventory() {
+  const tbody = document.querySelector("#productTable tbody");
+  tbody.innerHTML = ""; // Clear existing rows
+
+  const querySnapshot = await getDocs(collection(db, "inventory"));
+  querySnapshot.forEach((docSnap) => {
+    const item = docSnap.data();
+    item.docId = docSnap.id; // Save real Firebase doc ID
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${item.name}</td>
+      <td>${item.id}</td>
+      <td>${item.stock}</td>
+      <td>${item.reorder}</td>
+      <td>${getStatus(item.stock, item.reorder)}</td>
+      <td>${formatDate(item.updated)}</td>
+      <td class="actions">
+        <button class="add-btn">➕ Add</button>
+        <button class="remove-btn">➖ Remove</button>
+        <button class="delete-btn">🗑️</button>
+      </td>
+    `;
+
+    // Button logic
+    const addBtn = tr.querySelector(".add-btn");
+    const removeBtn = tr.querySelector(".remove-btn");
+    const deleteBtn = tr.querySelector(".delete-btn"); // select the already-created delete button
+
+    addBtn.addEventListener("click", () => {
+      showInputRow(tr, item, 1); // Add
+    });
+
+    removeBtn.addEventListener("click", () => {
+      showInputRow(tr, item, -1); // Remove
+    });
+
+    deleteBtn.addEventListener("click", async () => {
+      const confirmDelete = confirm(`Delete ${item.name}?`);
+      if (confirmDelete) {
+        await deleteDoc(doc(db, "inventory", item.docId)); // use real Firebase doc ID
+        loadInventory();
+      }
+    });
+  
+
+
+    tbody.appendChild(tr);
+  });
+}
+
+
+
+
+  loadInventory();
+function showInputRow(row, item, mode) {
+  // Prevent multiple input rows
+  if (document.querySelector(".input-row")) return;
+
+  const inputRow = document.createElement("tr");
+  inputRow.classList.add("input-row");
+
+  const inputCell = document.createElement("td");
+  inputCell.colSpan = 7;
+
+  const inputField = document.createElement("input");
+  inputField.type = "number";
+  inputField.placeholder = mode === 1 ? "Enter quantity to add" : "Enter quantity to remove";
+  inputField.style.marginRight = "10px";
+
+  const confirmBtn = document.createElement("button");
+  confirmBtn.textContent = "✅ Confirm";
+  confirmBtn.style.marginRight = "6px";
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.textContent = "❌ Cancel";
+
+  inputCell.appendChild(inputField);
+  inputCell.appendChild(confirmBtn);
+  inputCell.appendChild(cancelBtn);
+  inputRow.appendChild(inputCell);
+
+  row.after(inputRow);
+
+confirmBtn.addEventListener("click", async () => {
+  const qty = parseInt(inputField.value);
+
+  if (!isNaN(qty) && qty > 0) {
+    const newStock = item.stock + qty * mode;
+    const docRef = doc(db, "inventory", item.docId);
+
+    try {
+      // Update stock in Firestore
+      await updateDoc(docRef, {
+        stock: newStock,
+        updated: serverTimestamp()
+      });
+
+      // ✅ Log the activity
+      const actionType = mode === 1 ? "Added Stock" : "Removed Stock";
+      const qtyChanged = qty;
+
+      await logActivity(
+        currentUser?.email || "Unknown",
+        actionType,
+        `${actionType} ${qtyChanged} units of ${item.name} (ID: ${item.docId})`
+      );
+
+      inputRow.remove();
+      loadInventory(); // Refresh table
+    } catch (error) {
+      console.error("Error updating stock:", error);
+      alert("Failed to update stock.");
+    }
+  } else {
+    alert("Enter a valid quantity.");
+  }
+});
+
+
+  cancelBtn.addEventListener("click", () => {
+    inputRow.remove();
+  });
+}
+
+</script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+  
+  const aut = getAuth(app);
+
+  // ✅ Redirect to login if not authenticated
+  onAuthStateChanged(aut, (user) => {
+    if (!user) {
+      window.location.href = "index.html"; // Send to login page
+    }
+  });
+
+  // ✅ Logout handler
+  window.logout = function () {
+    signOut(aut)
+      .then(() => {
+        window.location.href = "index.html";
+      })
+      .catch((error) => {
+        alert("Logout failed: " + error.message);
+      });
+  };
+</script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
